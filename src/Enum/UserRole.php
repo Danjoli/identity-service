@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Enum;
 
-enum AccountStatus: string
+enum UserRole: string
 {
-    case Active = 'active';
-    case Disabled = 'disabled';
+    case User = 'ROLE_USER';
+    case Admin = 'ROLE_ADMIN';
 
     /** @return list<string> */
     public static function values(): array
