@@ -58,6 +58,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Generate test JWT key pair
+        run: php bin/console lexik:jwt:generate-keypair --skip-if-exists
+
       - name: Audit dependencies
         run: composer audit --locked
 
