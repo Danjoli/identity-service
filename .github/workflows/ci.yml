@@ -67,6 +67,9 @@ jobs:
       - name: Lint YAML configuration
         run: php bin/console lint:yaml config
 
+      - name: Run database migrations
+        run: php bin/console doctrine:migrations:migrate --no-interaction
+
       - name: Validate Doctrine mapping and schema
         run: php bin/console doctrine:schema:validate
 
