@@ -75,6 +75,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->displayName;
     }
 
+    public function changeDisplayName(string $displayName): void
+    {
+        $this->displayName = trim($displayName);
+        $this->touch();
+    }
+
     public function getPassword(): string
     {
         return $this->passwordHash;
