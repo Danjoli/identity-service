@@ -46,6 +46,8 @@ final class LoginControllerTest extends WebTestCase
         self::assertSame(900, $payload['data']['expiresIn']);
         self::assertIsString($payload['data']['accessToken']);
         self::assertCount(3, explode('.', $payload['data']['accessToken']));
+        self::assertIsString($payload['data']['refreshToken']);
+        self::assertGreaterThanOrEqual(64, strlen($payload['data']['refreshToken']));
     }
 
     public function testUnknownEmailAndWrongPasswordReturnSameError(): void
