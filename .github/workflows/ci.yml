@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests and quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: identity_service_test
+          POSTGRES_USER: identity_service
+          POSTGRES_PASSWORD: identity_service
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U identity_service -d identity_service_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      APP_ENV: test
+      APP_SECRET: github-actions-test-secret
+      DATABASE_URL: postgresql://identity_service:identity_service@127.0.0.1:5432/identity_service?serverVersion=16&charset=utf8
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@2.37.2
+        with:
+          php-version: '8.5'
+          extensions: ctype, iconv, pdo_pgsql
+          coverage: none
+          tools: composer:v2
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate Composer files
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Audit dependencies
+        run: composer audit --locked
+
+      - name: Lint service container
+        run: php bin/console lint:container
+
+      - name: Lint YAML configuration
+        run: php bin/console lint:yaml config
+
+      - name: Validate Doctrine mapping and schema
+        run: php bin/console doctrine:schema:validate
+
+      - name: Run PHPUnit
+        run: php bin/phpunit
