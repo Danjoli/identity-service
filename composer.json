@@ -70,6 +70,8 @@
         }
     },
     "require-dev": {
-        "symfony/test-pack": "*"
+        "phpunit/phpunit": "^13.4",
+        "symfony/browser-kit": "7.4.*",
+        "symfony/css-selector": "7.4.*"
     }
 }
