@@ -89,10 +89,24 @@ php -S 127.0.0.1:8000 -t public
 ## Testes e verificações
 
 ```bash
-php bin/phpunit
+composer test
+composer analyse
+composer cs:check
 php bin/console lint:container
 php bin/console lint:yaml config
 composer audit
+```
+
+Execute todas as verificações de código e testes em sequência:
+
+```bash
+composer quality
+```
+
+Para aplicar automaticamente as regras de estilo:
+
+```bash
+composer cs:fix
 ```
 
 ## Processo de desenvolvimento

@@ -13,6 +13,5 @@ final class KernelTest extends KernelTestCase
         $kernel = self::bootKernel();
 
         self::assertSame('test', $kernel->getEnvironment());
-        self::assertNotNull(self::getContainer());
     }
 }

@@ -60,6 +60,18 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "test": "php bin/phpunit",
+        "analyse": [
+            "php bin/console cache:warmup --env=dev",
+            "php vendor/bin/phpstan analyse --memory-limit=1G"
+        ],
+        "cs:check": "php vendor/bin/php-cs-fixer fix --dry-run --diff --verbose",
+        "cs:fix": "php vendor/bin/php-cs-fixer fix --verbose",
+        "quality": [
+            "@cs:check",
+            "@analyse",
+            "@test"
         ]
     },
     "conflict": {
@@ -72,6 +84,10 @@
         }
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.2",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "^13.4",
         "symfony/browser-kit": "7.4.*",
         "symfony/css-selector": "7.4.*"
