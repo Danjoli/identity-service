@@ -8,6 +8,7 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     app.jwt_ttl: '%env(int:JWT_TTL)%'
+    app.refresh_token_ttl: '%env(int:REFRESH_TOKEN_TTL)%'
 
 services:
     # default configuration for services in *this* file
@@ -20,9 +21,13 @@ services:
     App\:
         resource: '../src/'
 
-    App\Controller\LoginController:
+    App\Service\RefreshTokenService:
         arguments:
-            $tokenTtl: '%app.jwt_ttl%'
+            $tokenTtl: '%app.refresh_token_ttl%'
+
+    App\Service\TokenPairIssuer:
+        arguments:
+            $accessTokenTtl: '%app.jwt_ttl%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
