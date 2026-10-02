@@ -62,7 +62,10 @@
             "@auto-scripts"
         ],
         "test": "php bin/phpunit",
-        "analyse": "php vendor/bin/phpstan analyse --memory-limit=1G",
+        "analyse": [
+            "php bin/console cache:warmup --env=dev",
+            "php vendor/bin/phpstan analyse --memory-limit=1G"
+        ],
         "cs:check": "php vendor/bin/php-cs-fixer fix --dry-run --diff --verbose",
         "cs:fix": "php vendor/bin/php-cs-fixer fix --verbose",
         "quality": [
