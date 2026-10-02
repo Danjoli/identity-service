@@ -1,4 +1,6 @@
 {
+    "name": "danjoli/identity-service",
+    "description": "Identity and access management API built with Symfony, Doctrine ORM and PostgreSQL.",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",
