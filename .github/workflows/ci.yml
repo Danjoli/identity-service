@@ -70,5 +70,11 @@ jobs:
       - name: Validate Doctrine mapping and schema
         run: php bin/console doctrine:schema:validate
 
+      - name: Check coding standards
+        run: composer cs:check
+
+      - name: Run static analysis
+        run: composer analyse
+
       - name: Run PHPUnit
-        run: php bin/phpunit
+        run: composer test
