@@ -12,8 +12,10 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class UpdateUserAuthorization
 {
-    public function __construct(private EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private AuditLogger $auditLogger,
+    ) {
     }
 
     public function update(User $administrator, User $target, UpdateUserAuthorizationRequest $request): User
@@ -30,6 +32,10 @@ final readonly class UpdateUserAuthorization
         };
 
         $this->entityManager->flush();
+        $this->auditLogger->record('authorization.user_updated', $administrator, $target, [
+            'roles' => $target->getRoles(),
+            'status' => $target->getStatus()->value,
+        ]);
 
         return $target;
     }
