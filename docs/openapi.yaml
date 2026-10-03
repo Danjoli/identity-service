@@ -1,0 +1,206 @@
+openapi: 3.1.0
+info:
+  title: Identity Service API
+  version: 1.0.0
+  description: Authentication and identity lifecycle API. Error responses use RFC 9457 Problem Details.
+  license: {name: Proprietary, url: 'https://github.com/Danjoli/identity-service'}
+servers:
+  - url: /
+security: []
+tags:
+  - {name: Authentication, description: 'Account registration, sessions, verification and recovery'}
+  - {name: Profile, description: Authenticated self-service profile operations}
+  - {name: Administration, description: Role-protected user and audit operations}
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Authentication]
+      operationId: registerUser
+      summary: Register an account and send an e-mail verification token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/RegisterRequest'}
+            example: {email: ada@example.com, displayName: Ada Lovelace, password: StrongPassword1}
+      responses:
+        '201': {$ref: '#/components/responses/UserCreated'}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      operationId: login
+      summary: Exchange credentials for access and refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/LoginRequest'}
+            example: {email: ada@example.com, password: StrongPassword1}
+      responses:
+        '200': {$ref: '#/components/responses/TokenPair'}
+        '401': {$ref: '#/components/responses/Problem'}
+        '429': {$ref: '#/components/responses/RateLimitProblem'}
+  /api/v1/auth/refresh:
+    post:
+      tags: [Authentication]
+      operationId: refreshTokens
+      summary: Rotate a single-use refresh token
+      requestBody: {$ref: '#/components/requestBodies/RefreshToken'}
+      responses:
+        '200': {$ref: '#/components/responses/TokenPair'}
+        '401': {$ref: '#/components/responses/Problem'}
+  /api/v1/auth/logout:
+    post:
+      tags: [Authentication]
+      operationId: logout
+      summary: Revoke a refresh session
+      security: [{bearerAuth: []}]
+      requestBody: {$ref: '#/components/requestBodies/RefreshToken'}
+      responses:
+        '204': {description: Session revoked}
+        '401': {$ref: '#/components/responses/Problem'}
+  /api/v1/auth/email/verify:
+    post:
+      tags: [Authentication]
+      operationId: verifyEmail
+      summary: Confirm e-mail ownership with a single-use token
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/OpaqueTokenRequest'}, example: {token: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}}}
+      responses:
+        '200': {description: E-mail verified, content: {application/json: {schema: {type: object}}}}
+        '400': {$ref: '#/components/responses/Problem'}
+  /api/v1/auth/email/resend:
+    post:
+      tags: [Authentication]
+      operationId: resendEmailVerification
+      summary: Request verification instructions without revealing account existence
+      requestBody: {$ref: '#/components/requestBodies/Email'}
+      responses:
+        '202': {$ref: '#/components/responses/Accepted'}
+        '429': {$ref: '#/components/responses/RateLimitProblem'}
+  /api/v1/auth/password/request:
+    post:
+      tags: [Authentication]
+      operationId: requestPasswordReset
+      summary: Request password reset instructions without revealing account existence
+      requestBody: {$ref: '#/components/requestBodies/Email'}
+      responses:
+        '202': {$ref: '#/components/responses/Accepted'}
+        '429': {$ref: '#/components/responses/RateLimitProblem'}
+  /api/v1/auth/password/reset:
+    post:
+      tags: [Authentication]
+      operationId: resetPassword
+      summary: Replace a password using an expiring single-use token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PasswordResetRequest'}
+            example: {token: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, newPassword: NewStrongPassword2}
+      responses:
+        '204': {description: Password changed and sessions revoked}
+        '400': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+  /api/v1/me:
+    get:
+      tags: [Profile]
+      operationId: getCurrentUser
+      summary: Get the authenticated profile
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {$ref: '#/components/responses/User'}
+        '401': {$ref: '#/components/responses/Problem'}
+    patch:
+      tags: [Profile]
+      operationId: updateCurrentUser
+      summary: Update the authenticated profile
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/ProfileUpdateRequest'}, example: {displayName: Ada Byron}}}
+      responses:
+        '200': {$ref: '#/components/responses/User'}
+        '422': {$ref: '#/components/responses/ValidationProblem'}
+  /api/v1/me/password:
+    put:
+      tags: [Profile]
+      operationId: changeCurrentPassword
+      summary: Change password and revoke refresh sessions
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/PasswordChangeRequest'}, example: {currentPassword: StrongPassword1, newPassword: NewStrongPassword2}}}
+      responses:
+        '204': {description: Password changed}
+        '401': {$ref: '#/components/responses/Problem'}
+  /api/v1/admin/users:
+    get:
+      tags: [Administration]
+      operationId: listUsers
+      summary: List users
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: User collection, content: {application/json: {schema: {type: object, properties: {data: {type: array, items: {$ref: '#/components/schemas/User'}}}}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+  /api/v1/admin/users/{id}:
+    patch:
+      tags: [Administration]
+      operationId: updateUserAuthorization
+      summary: Update another user's roles and account status
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: '#/components/schemas/AuthorizationUpdateRequest'}, example: {roles: [ROLE_ADMIN], status: active}}}
+      responses:
+        '200': {$ref: '#/components/responses/User'}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /api/v1/admin/audit-events:
+    get:
+      tags: [Administration]
+      operationId: listAuditEvents
+      summary: List recent security audit events
+      security: [{bearerAuth: []}]
+      responses:
+        '200': {description: Audit event collection, content: {application/json: {schema: {type: object, properties: {data: {type: array, items: {$ref: '#/components/schemas/AuditEvent'}}}}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+  requestBodies:
+    RefreshToken:
+      required: true
+      content: {application/json: {schema: {$ref: '#/components/schemas/RefreshTokenRequest'}, example: {refreshToken: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc}}}
+    Email:
+      required: true
+      content: {application/json: {schema: {$ref: '#/components/schemas/EmailRequest'}, example: {email: ada@example.com}}}
+  responses:
+    UserCreated: {description: Account created, content: {application/json: {schema: {$ref: '#/components/schemas/UserEnvelope'}}}}
+    User: {description: User profile, content: {application/json: {schema: {$ref: '#/components/schemas/UserEnvelope'}}}}
+    TokenPair: {description: Access and refresh tokens, content: {application/json: {schema: {$ref: '#/components/schemas/TokenPairEnvelope'}}}}
+    Accepted: {description: Enumeration-safe request accepted, content: {application/json: {schema: {type: object}}}}
+    Problem: {description: Problem Details error, content: {application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}}}
+    ValidationProblem: {description: Validation failed, content: {application/problem+json: {schema: {$ref: '#/components/schemas/ValidationProblem'}}}}
+    RateLimitProblem: {description: Too many requests, headers: {Retry-After: {schema: {type: integer}}}, content: {application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}}}
+  schemas:
+    RegisterRequest: {type: object, required: [email, displayName, password], properties: {email: {type: string, format: email}, displayName: {type: string, minLength: 2, maxLength: 120}, password: {type: string, format: password, minLength: 12, maxLength: 72}}}
+    LoginRequest: {type: object, required: [email, password], properties: {email: {type: string, format: email}, password: {type: string, format: password}}}
+    RefreshTokenRequest: {type: object, required: [refreshToken], properties: {refreshToken: {type: string, minLength: 64, maxLength: 64}}}
+    OpaqueTokenRequest: {type: object, required: [token], properties: {token: {type: string, minLength: 64, maxLength: 64}}}
+    EmailRequest: {type: object, required: [email], properties: {email: {type: string, format: email}}}
+    PasswordResetRequest: {type: object, required: [token, newPassword], properties: {token: {type: string, minLength: 64, maxLength: 64}, newPassword: {type: string, format: password, minLength: 12, maxLength: 72}}}
+    PasswordChangeRequest: {type: object, required: [currentPassword, newPassword], properties: {currentPassword: {type: string, format: password}, newPassword: {type: string, format: password, minLength: 12, maxLength: 72}}}
+    ProfileUpdateRequest: {type: object, required: [displayName], properties: {displayName: {type: string, minLength: 2, maxLength: 120}}}
+    AuthorizationUpdateRequest: {type: object, required: [roles, status], properties: {roles: {type: array, minItems: 1, items: {type: string, enum: [ROLE_USER, ROLE_ADMIN]}}, status: {type: string, enum: [active, disabled]}}}
+    User: {type: object, required: [id, email, displayName, roles, status], properties: {id: {type: string, format: uuid}, email: {type: string, format: email}, displayName: {type: string}, roles: {type: array, items: {type: string}}, status: {type: string, enum: [active, disabled]}, emailVerifiedAt: {type: [string, 'null'], format: date-time}, createdAt: {type: string, format: date-time}, updatedAt: {type: string, format: date-time}}}
+    UserEnvelope: {type: object, required: [data], properties: {data: {$ref: '#/components/schemas/User'}}}
+    TokenPairEnvelope: {type: object, required: [data], properties: {data: {type: object, required: [tokenType, accessToken, refreshToken, expiresIn], properties: {tokenType: {const: Bearer}, accessToken: {type: string}, refreshToken: {type: string}, expiresIn: {type: integer, example: 900}}}}}
+    Problem: {type: object, required: [type, title, status, detail, instance, code, requestId], properties: {type: {type: string}, title: {type: string}, status: {type: integer}, detail: {type: string}, instance: {type: string}, code: {type: string}, requestId: {type: string, format: uuid}}}
+    ValidationProblem: {allOf: [{$ref: '#/components/schemas/Problem'}, {type: object, properties: {violations: {type: object, additionalProperties: {type: array, items: {type: string}}}}}]}
+    AuditEvent: {type: object, properties: {id: {type: string, format: uuid}, eventType: {type: string}, actor: {type: object}, subject: {type: object}, requestId: {type: string, format: uuid}, ipAddress: {type: [string, 'null']}, context: {type: object}, createdAt: {type: string, format: date-time}}}
