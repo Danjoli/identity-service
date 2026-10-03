@@ -73,6 +73,11 @@ jobs:
       - name: Validate OpenAPI specification
         run: npx --yes @redocly/cli@2.11.0 lint docs/openapi.yaml
 
+      - name: Build production containers
+        run: |
+          docker build --target app --tag identity-service-app:ci .
+          docker build --target web --tag identity-service-web:ci .
+
       - name: Run database migrations
         run: php bin/console doctrine:migrations:migrate --no-interaction
 

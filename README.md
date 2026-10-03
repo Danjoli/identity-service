@@ -86,6 +86,30 @@ do PHP:
 php -S 127.0.0.1:8000 -t public
 ```
 
+## Containers de produção
+
+O `Dockerfile` multi-stage gera dois artefatos mínimos: `app`, com PHP-FPM e
+dependências Composer sem pacotes de desenvolvimento, e `web`, com Nginx e os
+arquivos públicos. Ambos executam com usuários não-root e possuem health check.
+
+Defina os segredos e configurações exigidos pelo `compose.production.yaml` no
+ambiente e construa as imagens:
+
+```bash
+docker compose -f compose.production.yaml build --pull
+docker compose -f compose.production.yaml run --rm app php bin/console doctrine:migrations:migrate --no-interaction
+docker compose -f compose.production.yaml up -d
+```
+
+A API fica disponível na porta `8080`; o health check do Nginx responde em
+`/health`. Chaves JWT são montadas como secrets e não são copiadas para as
+imagens. Para inspecionar os serviços:
+
+```bash
+docker compose -f compose.production.yaml ps
+docker compose -f compose.production.yaml logs -f app web
+```
+
 ## Testes e verificações
 
 ```bash
