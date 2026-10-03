@@ -101,14 +101,30 @@ docker compose -f compose.production.yaml run --rm app php bin/console doctrine:
 docker compose -f compose.production.yaml up -d
 ```
 
-A API fica disponível na porta `8080`; o health check do Nginx responde em
-`/health`. Chaves JWT são montadas como secrets e não são copiadas para as
+A API fica disponível na porta `8080`. O endpoint `/health/live` confirma que o
+processo HTTP está ativo sem consultar dependências externas, enquanto
+`/health/ready` retorna `200` somente quando o PostgreSQL está acessível (ou
+`503` quando o serviço ainda não pode receber tráfego). Chaves JWT são montadas como secrets e não são copiadas para as
 imagens. Para inspecionar os serviços:
 
 ```bash
 docker compose -f compose.production.yaml ps
 docker compose -f compose.production.yaml logs -f app web
 ```
+
+## Observabilidade
+
+Em produção, os logs são escritos em JSON no `stderr`. Cada requisição recebe
+um `X-Request-ID` UUID; quando o cliente envia um UUID válido, ele é preservado.
+O mesmo identificador aparece no contexto e nos metadados (`extra`) dos logs,
+permitindo correlacionar uma resposta com todos os eventos daquela requisição.
+
+Monitore taxa e latência por status HTTP a partir dos logs estruturados. Como
+alertas iniciais, recomenda-se avisar quando `/health/ready` permanecer em `503`
+por dois minutos, quando respostas `5xx` ultrapassarem 2% por cinco minutos ou
+quando o p95 de latência superar 500 ms por dez minutos. Liveness deve reiniciar
+uma instância somente após falhas consecutivas; readiness deve apenas removê-la
+do balanceador enquanto o banco estiver indisponível.
 
 ## Testes e verificações
 

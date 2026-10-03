@@ -11,7 +11,42 @@ tags:
   - {name: Authentication, description: 'Account registration, sessions, verification and recovery'}
   - {name: Profile, description: Authenticated self-service profile operations}
   - {name: Administration, description: Role-protected user and audit operations}
+  - {name: Operations, description: Liveness and dependency readiness signals}
 paths:
+  /health/live:
+    get:
+      tags: [Operations]
+      operationId: getLiveness
+      summary: Confirm that the HTTP process is alive
+      responses:
+        '200':
+          description: Process is alive
+          headers:
+            X-Request-ID: {schema: {type: string, format: uuid}}
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties: {status: {type: string, const: alive}}
+        '4XX': {$ref: '#/components/responses/Problem'}
+  /health/ready:
+    get:
+      tags: [Operations]
+      operationId: getReadiness
+      summary: Confirm that required dependencies are available
+      responses:
+        '200':
+          description: Service is ready to receive traffic
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Readiness'}
+        '503':
+          description: A required dependency is unavailable
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Readiness'}
+        '4XX': {$ref: '#/components/responses/Problem'}
   /api/v1/auth/register:
     post:
       tags: [Authentication]
@@ -189,6 +224,7 @@ components:
     ValidationProblem: {description: Validation failed, content: {application/problem+json: {schema: {$ref: '#/components/schemas/ValidationProblem'}}}}
     RateLimitProblem: {description: Too many requests, headers: {Retry-After: {schema: {type: integer}}}, content: {application/problem+json: {schema: {$ref: '#/components/schemas/Problem'}}}}
   schemas:
+    Readiness: {type: object, required: [status, checks], properties: {status: {type: string, enum: [ready, not_ready]}, checks: {type: object, required: [database], properties: {database: {type: string, enum: [up, down]}}}}}
     RegisterRequest: {type: object, required: [email, displayName, password], properties: {email: {type: string, format: email}, displayName: {type: string, minLength: 2, maxLength: 120}, password: {type: string, format: password, minLength: 12, maxLength: 72}}}
     LoginRequest: {type: object, required: [email, password], properties: {email: {type: string, format: email}, password: {type: string, format: password}}}
     RefreshTokenRequest: {type: object, required: [refreshToken], properties: {refreshToken: {type: string, minLength: 64, maxLength: 64}}}

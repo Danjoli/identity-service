@@ -2,7 +2,7 @@
 FROM composer:2.8 AS dependencies
 WORKDIR /app
 COPY composer.json composer.lock symfony.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts --classmap-authoritative
+RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --no-scripts --optimize-autoloader
 
 FROM php:8.5-fpm-alpine AS app
 RUN apk add --no-cache libpq \
@@ -25,5 +25,5 @@ COPY --from=app /var/www/app/public /var/www/app/public
 RUN sed -i 's|^pid.*|pid /tmp/nginx.pid;|' /etc/nginx/nginx.conf \
     && chown -R nginx:nginx /var/cache/nginx /etc/nginx/conf.d
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD ["wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 CMD ["wget", "-q", "--spider", "http://127.0.0.1:8080/health/live"]
 USER nginx
