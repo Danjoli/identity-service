@@ -13,27 +13,23 @@ use App\Exception\InvalidPasswordResetToken;
 use App\Exception\InvalidRefreshToken;
 use App\Exception\SelfAuthorizationChange;
 use App\Exception\UserNotFound;
+use App\Observability\RequestContext;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-use Symfony\Component\HttpKernel\Event\RequestEvent;
-use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Serializer\Exception\NotEncodableValueException;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final class ApiProblemDetailsSubscriber implements EventSubscriberInterface
 {
-    private const REQUEST_ID = '_api_request_id';
-
     public function __construct(private readonly Security $security)
     {
     }
@@ -41,33 +37,8 @@ final class ApiProblemDetailsSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            KernelEvents::REQUEST => ['onRequest', 100],
-            KernelEvents::RESPONSE => ['onResponse', -100],
             KernelEvents::EXCEPTION => ['onException', 100],
         ];
-    }
-
-    public function onRequest(RequestEvent $event): void
-    {
-        $request = $event->getRequest();
-        if (!$this->isApiRequest($request)) {
-            return;
-        }
-
-        $provided = $request->headers->get('X-Request-ID');
-        $request->attributes->set(self::REQUEST_ID, is_string($provided) && Uuid::isValid($provided)
-            ? $provided
-            : Uuid::v7()->toRfc4122());
-    }
-
-    public function onResponse(ResponseEvent $event): void
-    {
-        $request = $event->getRequest();
-        if (!$this->isApiRequest($request)) {
-            return;
-        }
-
-        $event->getResponse()->headers->set('X-Request-ID', $this->requestId($request));
     }
 
     public function onException(ExceptionEvent $event): void
@@ -185,9 +156,9 @@ final class ApiProblemDetailsSubscriber implements EventSubscriberInterface
 
     private function requestId(Request $request): string
     {
-        $requestId = $request->attributes->get(self::REQUEST_ID);
+        $requestId = $request->attributes->get(RequestContext::REQUEST_ID);
 
-        return is_string($requestId) ? $requestId : Uuid::v7()->toRfc4122();
+        return is_string($requestId) ? $requestId : '';
     }
 
     private function validationException(\Throwable $exception): ?ValidationFailedException

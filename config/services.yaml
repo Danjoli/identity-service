@@ -49,5 +49,9 @@ services:
             $registrationLimiter: '@limiter.registration'
             $recoveryLimiter: '@limiter.recovery'
 
+    App\Logging\RequestIdProcessor:
+        tags:
+            - { name: monolog.processor }
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
