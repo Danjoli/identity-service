@@ -48,7 +48,7 @@ jobs:
         with:
           php-version: '8.5'
           extensions: ctype, iconv, pdo_pgsql
-          coverage: none
+          coverage: pcov
           tools: composer:v2
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -82,5 +82,14 @@ jobs:
       - name: Run static analysis
         run: composer analyse
 
-      - name: Run PHPUnit
-        run: composer test
+      - name: Run PHPUnit with coverage
+        run: php bin/phpunit --coverage-clover build/coverage.xml --coverage-text
+
+      - name: Publish coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: phpunit-coverage
+          path: build/coverage.xml
+          if-no-files-found: error
+          retention-days: 14
