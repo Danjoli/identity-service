@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Entity\RefreshToken;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\LockMode;
 use Doctrine\Persistence\ManagerRegistry;
@@ -31,5 +32,24 @@ final class RefreshTokenRepository extends ServiceEntityRepository
         }
 
         return $token;
+    }
+
+    public function revokeAllForUser(User $user, \DateTimeImmutable $revokedAt): int
+    {
+        $updated = $this->createQueryBuilder('token')
+            ->update()
+            ->set('token.revokedAt', ':revokedAt')
+            ->andWhere('token.user = :user')
+            ->andWhere('token.revokedAt IS NULL')
+            ->setParameter('revokedAt', $revokedAt)
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->execute();
+
+        if (!is_int($updated)) {
+            throw new \LogicException('Unexpected refresh token update result.');
+        }
+
+        return $updated;
     }
 }
