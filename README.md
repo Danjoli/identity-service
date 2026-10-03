@@ -1,11 +1,9 @@
 # Identity Service
 
 API de identidade e controle de acesso construída com Symfony, Doctrine ORM e
-PostgreSQL. O projeto está sendo desenvolvido de forma incremental, com cada
-mudança rastreada por issue, branch e Pull Request.
-
-> O projeto está em desenvolvimento. Nesta etapa, somente a fundação técnica
-> está disponível; os endpoints de autenticação fazem parte do roadmap da v1.
+PostgreSQL. A v1 cobre o ciclo completo de identidade, autenticação, autorização,
+recuperação de conta, auditoria e operação em produção. Cada mudança é rastreada
+por issue, branch, Pull Request e GitHub Actions.
 
 ## Objetivos da v1
 
@@ -166,9 +164,11 @@ Cada mudança segue este fluxo:
 ## Segurança
 
 Não faça commit de `.env.local`, credenciais, chaves privadas ou tokens. Os
-segredos de produção deverão ser fornecidos pelo ambiente de execução ou pelo
-gerenciador de secrets do Symfony.
+segredos de produção devem ser fornecidos pelo ambiente de execução ou por um
+gerenciador de secrets. Consulte [configuração e rotação](docs/configuration.md),
+[arquitetura](docs/architecture.md) e [implantação e rollback](docs/deployment.md).
 
 ## Licença
 
-A licença será definida antes da publicação da versão 1.0.0.
+Este é um projeto de portfólio com licença proprietária. Nenhuma permissão de
+uso, cópia, modificação ou distribuição é concedida sem autorização expressa.
