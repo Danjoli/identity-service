@@ -42,5 +42,12 @@ services:
             $tokenTtl: '%app.password_reset_ttl%'
             $sender: '%app.mailer_from%'
 
+    App\EventSubscriber\AuthenticationRateLimitSubscriber:
+        arguments:
+            $environment: '%kernel.environment%'
+            $loginLimiter: '@limiter.login'
+            $registrationLimiter: '@limiter.registration'
+            $recoveryLimiter: '@limiter.recovery'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

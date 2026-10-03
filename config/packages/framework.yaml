@@ -5,6 +5,20 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    rate_limiter:
+        login:
+            policy: fixed_window
+            limit: 10
+            interval: '1 minute'
+        registration:
+            policy: fixed_window
+            limit: 5
+            interval: '1 hour'
+        recovery:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'
+
     #esi: true
     #fragments: true
 

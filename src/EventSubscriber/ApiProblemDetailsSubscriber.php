@@ -130,7 +130,14 @@ final class ApiProblemDetailsSubscriber implements EventSubscriberInterface
 
         if ($exception instanceof HttpExceptionInterface) {
             $status = $exception->getStatusCode();
-            $this->respond($event, $status, $this->httpCode($status), Response::$statusTexts[$status] ?? 'Request failed.');
+            $detail = 429 === $status ? 'Too many requests. Try again later.' : Response::$statusTexts[$status] ?? 'Request failed.';
+            $this->respond(
+                $event,
+                $status,
+                $this->httpCode($status),
+                $detail,
+                headers: $this->responseHeaders($exception->getHeaders()),
+            );
 
             return;
         }
@@ -138,9 +145,18 @@ final class ApiProblemDetailsSubscriber implements EventSubscriberInterface
         $this->respond($event, 500, 'internal_error', 'An unexpected error occurred.');
     }
 
-    /** @param array<string, list<string>>|null $violations */
-    private function respond(ExceptionEvent $event, int $status, string $code, string $detail, ?array $violations = null): void
-    {
+    /**
+     * @param array<string, list<string>>|null   $violations
+     * @param array<string, string|list<string>> $headers
+     */
+    private function respond(
+        ExceptionEvent $event,
+        int $status,
+        string $code,
+        string $detail,
+        ?array $violations = null,
+        array $headers = [],
+    ): void {
         $request = $event->getRequest();
         $problem = [
             'type' => 'urn:identity-service:problem:'.$code,
@@ -158,7 +174,7 @@ final class ApiProblemDetailsSubscriber implements EventSubscriberInterface
         $event->setResponse(new JsonResponse(
             $problem,
             $status,
-            ['Content-Type' => 'application/problem+json', 'X-Request-ID' => $this->requestId($request)],
+            [...$headers, 'Content-Type' => 'application/problem+json', 'X-Request-ID' => $this->requestId($request)],
         ));
     }
 
@@ -221,7 +237,44 @@ final class ApiProblemDetailsSubscriber implements EventSubscriberInterface
             405 => 'method_not_allowed',
             415 => 'unsupported_media_type',
             422 => 'validation_failed',
+            429 => 'rate_limit_exceeded',
             default => 'http_error',
         };
+    }
+
+    /**
+     * @param array<mixed, mixed> $headers
+     *
+     * @return array<string, string|list<string>>
+     */
+    private function responseHeaders(array $headers): array
+    {
+        $normalized = [];
+        foreach ($headers as $name => $value) {
+            if (!is_string($name)) {
+                continue;
+            }
+
+            if (is_string($value)) {
+                $normalized[$name] = $value;
+
+                continue;
+            }
+
+            if (is_int($value) || is_float($value)) {
+                $normalized[$name] = (string) $value;
+
+                continue;
+            }
+
+            if (is_array($value) && array_is_list($value)) {
+                $textValues = array_filter($value, is_string(...));
+                if (count($textValues) === count($value)) {
+                    $normalized[$name] = array_values($textValues);
+                }
+            }
+        }
+
+        return $normalized;
     }
 }
