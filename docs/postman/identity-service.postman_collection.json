@@ -1,0 +1,32 @@
+{
+  "info": {
+    "name": "Identity Service v1",
+    "description": "Complete authentication lifecycle. Configure verificationToken and resetToken from delivered e-mails.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:8000"},
+    {"key": "email", "value": "ada@example.com"},
+    {"key": "password", "value": "StrongPassword1"},
+    {"key": "accessToken", "value": ""},
+    {"key": "refreshToken", "value": ""},
+    {"key": "verificationToken", "value": ""},
+    {"key": "resetToken", "value": ""},
+    {"key": "userId", "value": ""}
+  ],
+  "item": [
+    {"name": "Register", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"email\":\"{{email}}\",\"displayName\":\"Ada Lovelace\",\"password\":\"{{password}}\"}"}, "url": "{{baseUrl}}/api/v1/auth/register"}},
+    {"name": "Verify e-mail", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"token\":\"{{verificationToken}}\"}"}, "url": "{{baseUrl}}/api/v1/auth/email/verify"}},
+    {"name": "Login", "event": [{"listen": "test", "script": {"exec": ["const data = pm.response.json().data;", "pm.collectionVariables.set('accessToken', data.accessToken);", "pm.collectionVariables.set('refreshToken', data.refreshToken);"]}}], "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}"}, "url": "{{baseUrl}}/api/v1/auth/login"}},
+    {"name": "Current profile", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/api/v1/me"}},
+    {"name": "Update profile", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]}, "method": "PATCH", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"displayName\":\"Ada Byron\"}"}, "url": "{{baseUrl}}/api/v1/me"}},
+    {"name": "Refresh", "event": [{"listen": "test", "script": {"exec": ["const data = pm.response.json().data;", "pm.collectionVariables.set('accessToken', data.accessToken);", "pm.collectionVariables.set('refreshToken', data.refreshToken);"]}}], "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"refreshToken\":\"{{refreshToken}}\"}"}, "url": "{{baseUrl}}/api/v1/auth/refresh"}},
+    {"name": "Change password", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]}, "method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"currentPassword\":\"{{password}}\",\"newPassword\":\"NewStrongPassword2\"}"}, "url": "{{baseUrl}}/api/v1/me/password"}},
+    {"name": "Request password reset", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"email\":\"{{email}}\"}"}, "url": "{{baseUrl}}/api/v1/auth/password/request"}},
+    {"name": "Reset password", "request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"token\":\"{{resetToken}}\",\"newPassword\":\"NewStrongPassword2\"}"}, "url": "{{baseUrl}}/api/v1/auth/password/reset"}},
+    {"name": "Logout", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]}, "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"refreshToken\":\"{{refreshToken}}\"}"}, "url": "{{baseUrl}}/api/v1/auth/logout"}},
+    {"name": "Admin - List users", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/api/v1/admin/users"}},
+    {"name": "Admin - Update authorization", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]}, "method": "PATCH", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"roles\":[\"ROLE_ADMIN\"],\"status\":\"active\"}"}, "url": "{{baseUrl}}/api/v1/admin/users/{{userId}}"}},
+    {"name": "Admin - Audit events", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{accessToken}}", "type": "string"}]}, "method": "GET", "url": "{{baseUrl}}/api/v1/admin/audit-events"}}
+  ]
+}
