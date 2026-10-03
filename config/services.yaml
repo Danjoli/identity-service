@@ -10,6 +10,7 @@ parameters:
     app.jwt_ttl: '%env(int:JWT_TTL)%'
     app.refresh_token_ttl: '%env(int:REFRESH_TOKEN_TTL)%'
     app.email_verification_ttl: '%env(int:EMAIL_VERIFICATION_TTL)%'
+    app.password_reset_ttl: '%env(int:PASSWORD_RESET_TTL)%'
     app.mailer_from: '%env(MAILER_FROM)%'
 
 services:
@@ -34,6 +35,11 @@ services:
     App\Service\EmailVerificationService:
         arguments:
             $tokenTtl: '%app.email_verification_ttl%'
+            $sender: '%app.mailer_from%'
+
+    App\Service\PasswordResetService:
+        arguments:
+            $tokenTtl: '%app.password_reset_ttl%'
             $sender: '%app.mailer_from%'
 
     # add more service definitions when explicit configuration is needed
