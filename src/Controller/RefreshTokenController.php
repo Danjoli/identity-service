@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\RefreshTokenRequest;
-use App\Exception\AccountDisabled;
-use App\Exception\InvalidRefreshToken;
 use App\Service\TokenPairIssuer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,17 +19,7 @@ final class RefreshTokenController extends AbstractController
         RefreshTokenRequest $request,
         TokenPairIssuer $tokenPairIssuer,
     ): JsonResponse {
-        try {
-            $tokens = $tokenPairIssuer->rotate($request->refreshToken);
-        } catch (InvalidRefreshToken $exception) {
-            return $this->json([
-                'error' => ['code' => 'invalid_refresh_token', 'message' => $exception->getMessage()],
-            ], JsonResponse::HTTP_UNAUTHORIZED);
-        } catch (AccountDisabled $exception) {
-            return $this->json([
-                'error' => ['code' => 'account_disabled', 'message' => $exception->getMessage()],
-            ], JsonResponse::HTTP_FORBIDDEN);
-        }
+        $tokens = $tokenPairIssuer->rotate($request->refreshToken);
 
         return $this->json(['data' => $tokens]);
     }

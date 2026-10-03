@@ -6,7 +6,6 @@ namespace App\Controller;
 
 use App\Dto\PasswordResetConfirmationRequest;
 use App\Dto\PasswordResetRequest;
-use App\Exception\InvalidPasswordResetToken;
 use App\Service\PasswordResetService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,16 +35,7 @@ final class PasswordResetController extends AbstractController
         PasswordResetConfirmationRequest $request,
         PasswordResetService $passwordReset,
     ): JsonResponse {
-        try {
-            $passwordReset->reset($request->token, $request->newPassword);
-        } catch (InvalidPasswordResetToken $exception) {
-            return $this->json([
-                'error' => [
-                    'code' => 'invalid_password_reset_token',
-                    'message' => $exception->getMessage(),
-                ],
-            ], JsonResponse::HTTP_BAD_REQUEST);
-        }
+        $passwordReset->reset($request->token, $request->newPassword);
 
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
