@@ -60,14 +60,17 @@ final class LoginControllerTest extends WebTestCase
             'password' => self::PASSWORD,
         ]);
         self::assertResponseStatusCodeSame(401);
-        $unknownResponse = $client->getResponse()->getContent();
+        $unknownResponse = $this->responseData($client);
 
         $client->jsonRequest('POST', '/api/v1/auth/login', [
             'email' => self::EMAIL,
             'password' => 'IncorrectPassword1',
         ]);
         self::assertResponseStatusCodeSame(401);
-        self::assertSame($unknownResponse, $client->getResponse()->getContent());
+        $wrongPasswordResponse = $this->responseData($client);
+        self::assertSame($unknownResponse['status'], $wrongPasswordResponse['status']);
+        self::assertSame($unknownResponse['code'], $wrongPasswordResponse['code']);
+        self::assertSame($unknownResponse['detail'], $wrongPasswordResponse['detail']);
     }
 
     public function testRejectsDisabledAccount(): void
@@ -86,8 +89,7 @@ final class LoginControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(403);
         $payload = $this->responseData($client);
-        self::assertIsArray($payload['error']);
-        self::assertSame('account_disabled', $payload['error']['code']);
+        self::assertSame('account_disabled', $payload['code']);
     }
 
     private function createUser(): User

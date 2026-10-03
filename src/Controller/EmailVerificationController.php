@@ -6,7 +6,6 @@ namespace App\Controller;
 
 use App\Dto\EmailVerificationRequest;
 use App\Dto\ResendEmailVerificationRequest;
-use App\Exception\InvalidEmailVerificationToken;
 use App\Service\EmailVerificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,16 +20,7 @@ final class EmailVerificationController extends AbstractController
         EmailVerificationRequest $request,
         EmailVerificationService $verification,
     ): JsonResponse {
-        try {
-            $user = $verification->confirm($request->token);
-        } catch (InvalidEmailVerificationToken $exception) {
-            return $this->json([
-                'error' => [
-                    'code' => 'invalid_email_verification_token',
-                    'message' => $exception->getMessage(),
-                ],
-            ], JsonResponse::HTTP_BAD_REQUEST);
-        }
+        $user = $verification->confirm($request->token);
 
         return $this->json([
             'data' => [

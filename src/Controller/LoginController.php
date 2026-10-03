@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\LoginRequest;
-use App\Exception\AccountDisabled;
-use App\Exception\InvalidCredentials;
 use App\Service\AuthenticateUser;
 use App\Service\TokenPairIssuer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,17 +21,7 @@ final class LoginController extends AbstractController
         AuthenticateUser $authenticateUser,
         TokenPairIssuer $tokenPairIssuer,
     ): JsonResponse {
-        try {
-            $user = $authenticateUser->authenticate($request);
-        } catch (InvalidCredentials $exception) {
-            return $this->json([
-                'error' => ['code' => 'invalid_credentials', 'message' => $exception->getMessage()],
-            ], JsonResponse::HTTP_UNAUTHORIZED);
-        } catch (AccountDisabled $exception) {
-            return $this->json([
-                'error' => ['code' => 'account_disabled', 'message' => $exception->getMessage()],
-            ], JsonResponse::HTTP_FORBIDDEN);
-        }
+        $user = $authenticateUser->authenticate($request);
 
         return $this->json([
             'data' => [

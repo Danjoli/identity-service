@@ -72,8 +72,7 @@ final class RegisterUserControllerTest extends WebTestCase
         $client->jsonRequest('POST', '/api/v1/auth/register', $request);
         self::assertResponseStatusCodeSame(409);
         $payload = $this->responseData($client);
-        self::assertIsArray($payload['error']);
-        self::assertSame('email_already_exists', $payload['error']['code']);
+        self::assertSame('email_already_exists', $payload['code']);
     }
 
     public function testRejectsWeakPassword(): void

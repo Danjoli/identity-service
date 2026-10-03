@@ -6,7 +6,7 @@ namespace App\Controller;
 
 use App\Dto\UpdateUserAuthorizationRequest;
 use App\Entity\User;
-use App\Exception\SelfAuthorizationChange;
+use App\Exception\UserNotFound;
 use App\Repository\UserRepository;
 use App\Service\UpdateUserAuthorization;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,9 +34,7 @@ final class AdminUserController extends AbstractController
         UpdateUserAuthorization $updateUserAuthorization,
     ): JsonResponse {
         if (!Uuid::isValid($id) || !$target = $users->find($id)) {
-            return $this->json([
-                'error' => ['code' => 'user_not_found', 'message' => 'User not found.'],
-            ], JsonResponse::HTTP_NOT_FOUND);
+            throw new UserNotFound();
         }
 
         $administrator = $this->getUser();
@@ -44,16 +42,7 @@ final class AdminUserController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        try {
-            $user = $updateUserAuthorization->update($administrator, $target, $request);
-        } catch (SelfAuthorizationChange $exception) {
-            return $this->json([
-                'error' => [
-                    'code' => 'self_authorization_change_forbidden',
-                    'message' => $exception->getMessage(),
-                ],
-            ], JsonResponse::HTTP_CONFLICT);
-        }
+        $user = $updateUserAuthorization->update($administrator, $target, $request);
 
         return $this->json(['data' => self::userData($user)]);
     }

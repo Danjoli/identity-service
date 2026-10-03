@@ -7,7 +7,6 @@ namespace App\Controller;
 use App\Dto\ChangePasswordRequest;
 use App\Dto\UpdateProfileRequest;
 use App\Entity\User;
-use App\Exception\InvalidCurrentPassword;
 use App\Service\ChangePassword;
 use App\Service\UpdateProfile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -41,16 +40,7 @@ final class ProfileController extends AbstractController
         ChangePasswordRequest $request,
         ChangePassword $changePassword,
     ): JsonResponse {
-        try {
-            $changePassword->change($user, $request);
-        } catch (InvalidCurrentPassword $exception) {
-            return $this->json([
-                'error' => [
-                    'code' => 'invalid_current_password',
-                    'message' => $exception->getMessage(),
-                ],
-            ], JsonResponse::HTTP_UNAUTHORIZED);
-        }
+        $changePassword->change($user, $request);
 
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }

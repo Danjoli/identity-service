@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\RegisterUserRequest;
-use App\Exception\EmailAlreadyExists;
 use App\Service\EmailVerificationService;
 use App\Service\RegisterUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,16 +21,7 @@ final class RegisterUserController extends AbstractController
         RegisterUser $registerUser,
         EmailVerificationService $emailVerification,
     ): JsonResponse {
-        try {
-            $user = $registerUser->register($request);
-        } catch (EmailAlreadyExists $exception) {
-            return $this->json([
-                'error' => [
-                    'code' => 'email_already_exists',
-                    'message' => $exception->getMessage(),
-                ],
-            ], JsonResponse::HTTP_CONFLICT);
-        }
+        $user = $registerUser->register($request);
 
         $emailVerification->issueAndSend($user);
 
