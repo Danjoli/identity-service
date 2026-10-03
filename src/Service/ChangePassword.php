@@ -17,6 +17,7 @@ final readonly class ChangePassword
         private EntityManagerInterface $entityManager,
         private UserPasswordHasherInterface $passwordHasher,
         private RefreshTokenRepository $refreshTokens,
+        private AuditLogger $auditLogger,
     ) {
     }
 
@@ -29,6 +30,7 @@ final readonly class ChangePassword
         $this->entityManager->wrapInTransaction(function () use ($user, $request): void {
             $user->changePasswordHash($this->passwordHasher->hashPassword($user, $request->newPassword));
             $this->refreshTokens->revokeAllForUser($user, new \DateTimeImmutable());
+            $this->auditLogger->record('credential.password_changed', $user, $user);
         });
     }
 }

@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Dto\RefreshTokenRequest;
 use App\Entity\User;
+use App\Service\AuditLogger;
 use App\Service\RefreshTokenService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
@@ -21,8 +22,10 @@ final readonly class LogoutController
         #[MapRequestPayload(acceptFormat: 'json')]
         RefreshTokenRequest $request,
         RefreshTokenService $refreshTokens,
+        AuditLogger $auditLogger,
     ): JsonResponse {
         $refreshTokens->revoke($request->refreshToken, $user);
+        $auditLogger->record('authentication.logout', $user, $user);
 
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }

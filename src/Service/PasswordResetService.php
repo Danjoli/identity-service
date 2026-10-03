@@ -24,6 +24,7 @@ final readonly class PasswordResetService
         private RefreshTokenRepository $refreshTokens,
         private UserPasswordHasherInterface $passwordHasher,
         private MailerInterface $mailer,
+        private AuditLogger $auditLogger,
         private int $tokenTtl,
         private string $sender,
     ) {
@@ -73,6 +74,7 @@ final readonly class PasswordResetService
             $token->use($now);
             $user->changePasswordHash($this->passwordHasher->hashPassword($user, $newPassword));
             $this->refreshTokens->revokeAllForUser($user, $now);
+            $this->auditLogger->record('credential.password_reset', null, $user);
         });
     }
 

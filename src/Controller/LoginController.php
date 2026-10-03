@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Dto\LoginRequest;
+use App\Service\AuditLogger;
 use App\Service\AuthenticateUser;
 use App\Service\TokenPairIssuer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,13 +21,14 @@ final class LoginController extends AbstractController
         LoginRequest $request,
         AuthenticateUser $authenticateUser,
         TokenPairIssuer $tokenPairIssuer,
+        AuditLogger $auditLogger,
     ): JsonResponse {
         $user = $authenticateUser->authenticate($request);
+        $tokens = $tokenPairIssuer->issue($user);
+        $auditLogger->record('authentication.login_succeeded', $user, $user);
 
         return $this->json([
-            'data' => [
-                ...$tokenPairIssuer->issue($user),
-            ],
+            'data' => [...$tokens],
         ]);
     }
 }
