@@ -39,6 +39,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(enumType: AccountStatus::class)]
     private AccountStatus $status = AccountStatus::Active;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $emailVerifiedAt = null;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -100,6 +103,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function isActive(): bool
     {
         return AccountStatus::Active === $this->status;
+    }
+
+    public function isEmailVerified(): bool
+    {
+        return null !== $this->emailVerifiedAt;
+    }
+
+    public function getEmailVerifiedAt(): ?\DateTimeImmutable
+    {
+        return $this->emailVerifiedAt;
+    }
+
+    public function verifyEmail(\DateTimeImmutable $verifiedAt): void
+    {
+        $this->emailVerifiedAt ??= $verifiedAt;
+        $this->touch();
     }
 
     public function getCreatedAt(): \DateTimeImmutable

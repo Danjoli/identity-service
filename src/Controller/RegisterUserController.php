@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Dto\RegisterUserRequest;
 use App\Exception\EmailAlreadyExists;
+use App\Service\EmailVerificationService;
 use App\Service\RegisterUser;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -19,6 +20,7 @@ final class RegisterUserController extends AbstractController
         #[MapRequestPayload(acceptFormat: 'json')]
         RegisterUserRequest $request,
         RegisterUser $registerUser,
+        EmailVerificationService $emailVerification,
     ): JsonResponse {
         try {
             $user = $registerUser->register($request);
@@ -31,6 +33,8 @@ final class RegisterUserController extends AbstractController
             ], JsonResponse::HTTP_CONFLICT);
         }
 
+        $emailVerification->issueAndSend($user);
+
         return $this->json([
             'data' => [
                 'id' => $user->getId()->toRfc4122(),
@@ -38,6 +42,7 @@ final class RegisterUserController extends AbstractController
                 'displayName' => $user->getDisplayName(),
                 'roles' => $user->getRoles(),
                 'status' => $user->getStatus()->value,
+                'emailVerifiedAt' => null,
                 'createdAt' => $user->getCreatedAt()->format(DATE_ATOM),
             ],
         ], JsonResponse::HTTP_CREATED);
