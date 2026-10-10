@@ -12,6 +12,7 @@ parameters:
     app.email_verification_ttl: '%env(int:EMAIL_VERIFICATION_TTL)%'
     app.password_reset_ttl: '%env(int:PASSWORD_RESET_TTL)%'
     app.mailer_from: '%env(MAILER_FROM)%'
+    app.api_docs_enabled: '%env(bool:API_DOCS_ENABLED)%'
 
 services:
     # default configuration for services in *this* file
@@ -52,6 +53,11 @@ services:
     App\Logging\RequestIdProcessor:
         tags:
             - { name: monolog.processor }
+
+    App\Controller\ApiDocumentationController:
+        arguments:
+            $enabled: '%app.api_docs_enabled%'
+            $projectDir: '%kernel.project_dir%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
