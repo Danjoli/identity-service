@@ -6,6 +6,10 @@ projeto usa [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Não publicado]
 
+### Adicionado
+
+- Swagger UI interativo em `/docs`, servido localmente e configurável por ambiente.
+
 ## [1.0.0] - 2026-10-03
 
 ### Adicionado

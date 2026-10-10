@@ -84,6 +84,18 @@ do PHP:
 php -S 127.0.0.1:8000 -t public
 ```
 
+## Documentação interativa
+
+No ambiente de desenvolvimento, o Swagger UI fica disponível em
+`http://127.0.0.1:8000/docs`. Ele utiliza o contrato OpenAPI versionado pelo
+projeto, permite executar requisições e oferece o botão **Authorize** para
+informar um access token JWT no formato Bearer.
+
+A interface e seus arquivos são servidos localmente, sem dependência de CDN.
+Em produção ela permanece desabilitada por padrão; defina
+`API_DOCS_ENABLED=1` somente quando a exposição pública da documentação tiver
+sido aprovada.
+
 ## Containers de produção
 
 O `Dockerfile` multi-stage gera dois artefatos mínimos: `app`, com PHP-FPM e
