@@ -18,6 +18,13 @@ final readonly class ApiDocumentationController
         'swagger-ui.css',
     ];
 
+    private const ASSET_CONTENT_TYPES = [
+        'favicon-32x32.png' => 'image/png',
+        'swagger-ui-bundle.js' => 'application/javascript; charset=UTF-8',
+        'swagger-ui-standalone-preset.js' => 'application/javascript; charset=UTF-8',
+        'swagger-ui.css' => 'text/css; charset=UTF-8',
+    ];
+
     public function __construct(
         private bool $enabled,
         private string $projectDir,
@@ -59,7 +66,10 @@ final readonly class ApiDocumentationController
 
         return new BinaryFileResponse(
             $this->projectDir.'/vendor/swagger-api/swagger-ui/dist/'.$asset,
-            headers: ['Cache-Control' => 'public, max-age=31536000, immutable'],
+            headers: [
+                'Cache-Control' => 'public, max-age=31536000, immutable',
+                'Content-Type' => self::ASSET_CONTENT_TYPES[$asset],
+            ],
         );
     }
 

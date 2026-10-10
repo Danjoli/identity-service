@@ -42,6 +42,7 @@ final class ApiDocumentationControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('cache-control', 'immutable, max-age=31536000, public');
+        self::assertResponseHeaderSame('content-type', 'text/css; charset=UTF-8');
     }
 
     public function testUnknownSwaggerAssetIsNotExposed(): void
